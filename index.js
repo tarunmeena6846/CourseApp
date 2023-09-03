@@ -44,7 +44,7 @@ mongoose
 
 function detokenizeAdmin(req, res, next) {
   const authHeader = req.headers.authorization;
-  if (authHeader) {
+  if (authHeader) { 
     const token = authHeader.split(" ")[1];
     let user = jwt.verify(token, secretKey);
 
