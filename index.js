@@ -1,10 +1,11 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
+const cors = require("cors");
 const app = express();
 
 app.use(express.json());
-
+app.use(cors());
 const secretKey = "mysecretkey";
 
 const userSchema = new mongoose.Schema({
@@ -44,7 +45,7 @@ mongoose
 
 function detokenizeAdmin(req, res, next) {
   const authHeader = req.headers.authorization;
-  console.log(authHeader);
+  console.log("tarun header ", authHeader);
   if (authHeader) {
     const token = authHeader.split(" ")[1];
     let user = jwt.verify(token, secretKey);
@@ -77,6 +78,7 @@ function detokenizeUser(req, res, next) {
 }
 // Admin routes
 app.post("/admin/signup", async (req, res) => {
+  console.log("in admin signup", req.body.username);
   const bIsAdminPresent = await admin.findOne({
     username: req.body.username,
     password: req.body.password,
@@ -100,13 +102,23 @@ app.post("/admin/signup", async (req, res) => {
     res.status(401).send("Admin already registered");
   }
 });
+app.get("/admin/me", detokenizeAdmin, (req, res) => {
+  console.log("tarun", req.user.username);
+  if (req.user.username) {
+    res.status(201).json({
+      username: req.user.username,
+    });
+  } else {
+    res.status(401).send("Unauthorised");
+  }
+});
 // TODO add the below logic to a common place for the autentcation
 app.post("/admin/login", async (req, res) => {
   const bIsAdminPresent = await admin.findOne({
     username: req.headers.username,
     password: req.headers.password,
   });
-
+  console.log(bIsAdminPresent);
   if (bIsAdminPresent) {
     const token = jwt.sign(
       { username: req.headers.username, role: "admin" },
@@ -122,7 +134,7 @@ app.post("/admin/login", async (req, res) => {
 app.post("/admin/courses", detokenizeAdmin, (req, res) => {
   const newCourse = new Course(req.body);
   newCourse.save();
-  console.log(newCourse);
+  console.log("tarun", newCourse);
   res
     .status(201)
     .send({ message: "Course created successfully", courseId: newCourse.id });
@@ -148,6 +160,7 @@ app.put("/admin/courses/:courseId", detokenizeAdmin, async (req, res) => {
 app.get("/admin/courses", detokenizeAdmin, async (req, res) => {
   // logic to get all courses
   const courses = await Course.find({});
+  console.log("tarun", courses);
   res.status(201).json(courses);
 });
 
@@ -231,6 +244,18 @@ app.get("/users/purchasedCourses", detokenizeUser, async (req, res) => {
   console.log(userInDB);
   const userCourses = await Course.find({ _id: userInDB.purchasedCourse });
   res.status(201).json(userCourses);
+});
+app.get("/admin/courses/:courseId", detokenizeUser, async (req, res) => {
+  // logic to purchase a course
+
+  console.log("tarun course id for purchase is " + req.params.courseId);
+  const course = await Course.findById(req.params.courseId);
+  console.log(course);
+  if (course) {
+    res.status(201).json(course);
+  } else {
+    return res.status(400).send({ message: "Course not found" });
+  }
 });
 
 app.listen(3000, () => {
