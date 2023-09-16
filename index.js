@@ -44,6 +44,7 @@ mongoose
 
 function detokenizeAdmin(req, res, next) {
   const authHeader = req.headers.authorization;
+  console.log(authHeader);
   if (authHeader) {
     const token = authHeader.split(" ")[1];
     let user = jwt.verify(token, secretKey);
@@ -59,12 +60,14 @@ function detokenizeAdmin(req, res, next) {
 }
 function detokenizeUser(req, res, next) {
   const authHeader = req.headers.authorization;
+  console.log(authHeader);
   if (authHeader) {
     const token = authHeader.split(" ")[1];
     console.log(token);
     let user = jwt.verify(token, secretKey);
     console.log(user);
     if (user.role === "admin" || user.role === "user") {
+      console.log("tarun at detoken" + user.username);
       req.user = user;
       next();
     } else {
