@@ -1,0 +1,5 @@
+/* In your global CSS file (e.g., styles.css or App.css) */
+/* This CSS rule ensures the scrollbar is always displayed */
+body {
+  overflow-y: scroll;
+}
