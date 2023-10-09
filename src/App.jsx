@@ -1,4 +1,9 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import Login from "./components/Login";
 import Landing from "./components/Landing";
 import CreateCourse from "./components/CreateCourse";
@@ -6,6 +11,13 @@ import Register from "./components/Register";
 import ShowCourses from "./components/ShowCourses";
 import Course from "./components/Course";
 import Appbar from "./AppBar";
+import { RecoilRoot, useSetRecoilState } from "recoil";
+import { userState } from "./atoms/user";
+import { BASE_URL } from "./config.js";
+import axios from "axios";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
 // import User from "./components/AdminCourses";
 // import { AppBar } from "@mui/material";
 
@@ -15,19 +27,68 @@ import Appbar from "./AppBar";
 // You can also try going to /random and see what happens (a route that doesnt exist)
 function App() {
   return (
-    <Router>
-      <Appbar />
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        {/* <Route path="/user" element={<User />} /> */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/createCourse" element={<CreateCourse />} />
-        <Route path="/courses" element={<ShowCourses />} />
-        <Route path="/course/:courseId" element={<Course />} />
-      </Routes>
-    </Router>
+    <RecoilRoot>
+      <Router>
+        <Appbar />
+        <InitUser />
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          {/* <Route path="/user" element={<User />} /> */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/createCourse" element={<CreateCourse />} />
+          <Route path="/courses" element={<ShowCourses />} />
+          <Route path="/course/:courseId" element={<Course />} />
+        </Routes>
+      </Router>
+    </RecoilRoot>
   );
+}
+
+export function InitUser() {
+  const setUserEmail = useSetRecoilState(userState);
+  const navigate = useNavigate();
+
+  const init = async () => {
+    await fetch(`${BASE_URL}/admin/me`, {
+      method: "GET",
+      headers: {
+        "content-Type": "application/json",
+        authorization: "Bearer " + localStorage.getItem("token"),
+      },
+    })
+      .then((resp) => {
+        if (!resp.ok) {
+          throw new Error("Network response is not ok");
+        }
+        resp.json().then((data) => {
+          if (data && data.username) {
+            // setUserEmail(data.username);
+            setUserEmail({
+              isLoading: false,
+              userEmail: data.username,
+            });
+          } else {
+            setUserEmail({
+              isLoading: false,
+              userEmail: null,
+            });
+          }
+        });
+      })
+      .catch((error) => {
+        setUserEmail({
+          isLoading: false,
+          userEmail: null,
+        });
+        console.error("Error while logging in", error);
+      });
+  };
+  useEffect(() => {
+    init();
+  }, []);
+
+  return <></>;
 }
 
 export default App;

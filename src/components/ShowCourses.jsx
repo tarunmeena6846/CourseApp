@@ -1,9 +1,14 @@
 import React, { useEffect } from "react";
 import { Card, FormControlLabel, Typography } from "@mui/material";
 import { Button } from "@mui/material";
+import { useParams } from "react-router-dom";
+import { RecoilRoot, useSetRecoilState } from "recoil";
+import { userState } from "../atoms/user";
+
 // import { AppBar } from "@mui/material";
 function ShowCourses() {
   const [courses, setCourses] = React.useState([]);
+  const setUserEmail = useSetRecoilState(userState);
   useEffect(() => {
     fetch("http://localhost:3000/admin/courses", {
       method: "GET",
@@ -18,10 +23,17 @@ function ShowCourses() {
         }
         resp.json().then((data) => {
           console.log("tarun", data);
+          console.log("tarun meena");
+
           setCourses(data);
         });
       })
       .catch((error) => {
+        console.log("tarun meena");
+        setUserEmail({
+          isLoading: false,
+          userEmail: null,
+        });
         console.error("Error signing in email");
       });
   }, []);
@@ -40,7 +52,30 @@ function ShowCourses() {
   );
 }
 export function CoursesDisplay({ course }) {
+  // let { courseId } = useParams();
   // const navigate = useNavigate();
+
+  const handleDelete = (courseId) => {
+    fetch("http://localhost:3000/admin/courses/" + courseId, {
+      method: "DELETE",
+      headers: {
+        "content-Type": "application/json",
+        authorization: "Bearer " + localStorage.getItem("token"),
+      },
+    })
+      .then((resp) => {
+        if (!resp.ok) {
+          throw new Error("Error in response from the server ");
+        }
+        resp.json().then((data) => {
+          alert("Course Deleted");
+          window.location = "/courses";
+        });
+      })
+      .catch((error) => {
+        console.error("Error in Deleting  the course", error);
+      });
+  };
 
   return (
     <Card
@@ -49,19 +84,36 @@ export function CoursesDisplay({ course }) {
         width: 200,
         minHeight: 150,
         padding: 20,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
       }}
     >
-      {course._id}
+      {/* {course._id} */}
       <Typography textAlign={"center"} variant="h5">
         {course.title}
       </Typography>
       <Typography textAlign={"center"} variant="subtitle1">
         {course.description}
       </Typography>
-      <img src={course.imageLink} style={{ width: 150 }}></img>
-      <div style={{ display: "flex", justifyContent: "center", marginTop: 20 }}>
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <img
+          src={course.imageLink}
+          style={{ width: 170, height: 170 }}
+          alt="Course"
+        ></img>
+      </div>
+      {/* <div style={{ display: "flex", justifyContent: "center", marginTop: 20 }}> */}
+      <div
+        style={{
+          display: "flex",
+          // flexDirection: "column",
+          alignItems: "center",
+          marginTop: 20,
+        }}
+      >
         <Button
-          style={{ margin: 3 }}
+          style={{ margin: 3, marginLeft: 20 }}
           variant="contained"
           onClick={() => {
             window.location = "/course/" + course._id;
@@ -72,9 +124,7 @@ export function CoursesDisplay({ course }) {
         <Button
           style={{ margin: 3 }}
           variant="contained"
-          onClick={() => {
-            // navigate("/course/" + course._id);
-          }}
+          onClick={() => handleDelete(course._id)}
         >
           Delete
         </Button>

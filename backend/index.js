@@ -6,6 +6,12 @@ const app = express();
 
 app.use(express.json());
 app.use(cors());
+// app.use(
+//   cors({
+//     origin: "http://localhost:5173", // Allow requests from this origin
+//   })
+// );
+
 const secretKey = "mysecretkey";
 
 const userSchema = new mongoose.Schema({
@@ -118,7 +124,7 @@ app.post("/admin/login", async (req, res) => {
     username: req.headers.username,
     password: req.headers.password,
   });
-  console.log(bIsAdminPresent);
+  console.log("tarun in login", bIsAdminPresent);
   if (bIsAdminPresent) {
     const token = jwt.sign(
       { username: req.headers.username, role: "admin" },
@@ -142,16 +148,19 @@ app.post("/admin/courses", detokenizeAdmin, (req, res) => {
 
 app.put("/admin/courses/:courseId", detokenizeAdmin, async (req, res) => {
   // const courseId = mongoose.Types.ObjectId(req.params.courseId);
+  console.log(req.params.courseId);
+  console.log(req.body);
   const newCourse = await Course.findByIdAndUpdate(
     req.params.courseId,
-    req.body,
-    {
-      new: true,
-    }
+    req.body
+    // {
+    //   new: true,
+    // }
   );
 
+  console.log(newCourse);
   if (newCourse) {
-    res.status(201).send("Course updated successfully");
+    res.status(201).json(newCourse);
   } else {
     res.status(404).send("No course found with the provided ID");
   }
@@ -250,6 +259,19 @@ app.get("/admin/courses/:courseId", detokenizeUser, async (req, res) => {
 
   console.log("tarun course id for purchase is " + req.params.courseId);
   const course = await Course.findById(req.params.courseId);
+  console.log(course);
+  if (course) {
+    res.status(201).json(course);
+  } else {
+    return res.status(400).send({ message: "Course not found" });
+  }
+});
+
+app.delete("/admin/courses/:courseId", detokenizeUser, async (req, res) => {
+  // logic to purchase a course
+
+  console.log("tarun course id for delete is " + req.params.courseId);
+  const course = await Course.findByIdAndDelete(req.params.courseId);
   console.log(course);
   if (course) {
     res.status(201).json(course);

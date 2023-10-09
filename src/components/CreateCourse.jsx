@@ -3,14 +3,25 @@ import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import { Card, FormControlLabel, Typography } from "@mui/material";
 import { Checkbox } from "@mui/material";
+import { useRecoilValue, useSetRecoilState } from "recoil";
+import { emailState } from "../selectors/userEmail";
+import { userState } from "../atoms/user";
+import { InitUser } from "../App";
+
 /// You need to add input boxes to take input for users to create a course.
 /// I've added one input so you understand the api to do it.
 function CreateCourse() {
   const [title, setTitle] = React.useState("");
   const [description, setDescription] = React.useState("");
   const [price, setPrice] = React.useState("");
+  const [image, setImage] = React.useState("");
+
   const [isChecked, setIsChecked] = React.useState(false);
 
+  // const userEmail = useRecoilValue(emailState);
+  const setUserEmail = useSetRecoilState(userState);
+  const user = useRecoilValue(userState);
+  // console.log(userEmail);
   console.log("tarun", title);
   console.log(description);
   const addCourse = () => {
@@ -20,7 +31,7 @@ function CreateCourse() {
       body: JSON.stringify({
         title: title,
         description: description,
-        imageLink: "",
+        imageLink: image,
         price: price,
         published: isChecked,
       }),
@@ -36,13 +47,29 @@ function CreateCourse() {
         resp.json().then((data) => {
           console.log("Course created sucessfully ", data);
         });
+        window.location = "/courses";
+        alert("Course Added");
       })
       .catch((error) => {
+        setUserEmail({
+          isLoading: false,
+          userEmail: null,
+        });
         console.error("Error in creating the course");
       });
   };
+
+  if (!user.userEmail) {
+    // User is not authenticated, you can redirect to the login page or display a message
+    return (
+      <div>
+        <InitUser></InitUser>
+      </div>
+    );
+  }
   return (
     <div>
+      <InitUser></InitUser>
       <div
         style={{ paddingTop: 50, display: "flex", justifyContent: "center" }}
       >
@@ -84,11 +111,11 @@ function CreateCourse() {
           <br />
           <TextField
             onChange={(e) => {
-              setPrice(e.target.value);
+              setImage(e.target.value);
             }}
-            label="Price"
+            label="ImageLink"
             variant="outlined"
-            type={"price"}
+            value={image}
             fullWidth
           />
           <br />

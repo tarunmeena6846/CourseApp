@@ -1,4 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { emailState } from "./selectors/userEmail";
+import { isLoadingState } from "./selectors/isLoading";
+import { userState } from "./atoms/user";
+import { useSetRecoilState, useRecoilValue } from "recoil";
+import { BASE_URL } from "./config.js";
+import { useNavigate } from "react-router-dom";
+
 import {
   AppBar,
   Button,
@@ -9,53 +16,24 @@ import {
 import { Link } from "react-router-dom";
 
 function Appbar() {
-  const [userEmail, setUserEmail] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // setTimeout(() => {
-      const storedToken = localStorage.getItem("token");
-      if (storedToken) {
-        // Make an API call to check the user's login status
-        fetch("http://localhost:3000/admin/me", {
-          method: "GET",
-          headers: {
-            "content-Type": "application/json",
-            authorization: "Bearer " + storedToken,
-          },
-        })
-          .then((resp) => {
-            if (!resp.ok) {
-              throw new Error("Network response is not ok");
-            }
-            resp.json().then((data) => {
-              if (data && data.username) {
-                setUserEmail(data.username);
-              } else {
-                setUserEmail(null);
-              }
-            });
-          })
-          .catch((error) => {
-            console.error("Error while logging in", error);
-          })
-          .finally(() => {
-            setIsLoading(false); // Set isLoading to false once the request is complete
-          });
-      } else {
-        setIsLoading(false); // Set isLoading to false if there's no stored token
-      }
-    // }, 200);
-  }, []);
-
+  const userEmail = useRecoilValue(emailState);
+  const setUserEmail = useSetRecoilState(userState);
+  const isLoading = useRecoilValue(isLoadingState);
+  const navigate = useNavigate();
+  
   return (
     <AppBar position="static">
       <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexFlow: 1 }}>
+        <Typography
+          variant="h6"
+          sx={{ flexFlow: 1, textDecoration: "none", color: "white" }}
+          component={Link}
+          to="/"
+        >
           courseera
         </Typography>
         {isLoading ? ( // Display a loading indicator while isLoading is true
-          <CircularProgress color="inherit" />
+          <div></div>
         ) : userEmail ? (
           // If the user is logged in, render the user-specific buttons
           <div style={{ marginLeft: "auto" }}>
@@ -67,7 +45,7 @@ function Appbar() {
               color="inherit"
               onClick={() => {
                 // localStorage.setItem("token", null);
-                window.location = "/courses";
+                navigate("/courses");
               }}
             >
               Courses
@@ -76,8 +54,8 @@ function Appbar() {
               color="inherit"
               onClick={() => {
                 localStorage.removeItem("token");
-                setUserEmail(null);
-                window.location = "/";
+                setUserEmail({ userEmail: null });
+                navigate("/");
               }}
             >
               Logout

@@ -2,12 +2,17 @@ import React, { useState } from "react";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import { Card, Typography } from "@mui/material";
-
+import { BASE_URL } from "../config.js";
+import { userState } from "../atoms/user";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { useSetRecoilState } from "recoil";
 /// File is incomplete. You need to add input boxes to take input for users to login.
 function Login() {
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
-
+  const setUserEmail = useSetRecoilState(userState);
+  const navigate = useNavigate();
   console.log("tarun", email);
   console.log(password);
   const handleRegister = () => {
@@ -25,8 +30,11 @@ function Login() {
         resp.json().then((data) => {
           console.log(data);
           localStorage.setItem("token", data.token);
-          window.location = "/courses";
-
+          setUserEmail({
+            isLoading: false,
+            userEmail: email,
+          });
+          navigate("/courses");
           console.log(data.token);
           console.log("Login sucessfully", data);
         });
