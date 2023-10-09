@@ -1,16 +1,13 @@
-const express = require("express");
-const jwt = require("jsonwebtoken");
-const mongoose = require("mongoose");
-const cors = require("cors");
+import express, { NextFunction } from "express";
+import jwt, { JwtPayload } from "jsonwebtoken";
+import mongoose from "mongoose";
+import cors from "cors";
+import { Request, Response } from "express";
+
 const app = express();
 
 app.use(express.json());
 app.use(cors());
-// app.use(
-//   cors({
-//     origin: "http://localhost:5173", // Allow requests from this origin
-//   })
-// );
 
 const secretKey = "mysecretkey";
 
@@ -40,32 +37,47 @@ const admin = mongoose.model("admin", adminSchema);
 mongoose
   .connect(
     "mongodb+srv://tarunmeena6846:Tuesday6%5E@cluster0.f6tatpb.mongodb.net/",
-    { useNewUrlParser: true, useUnifiedTopology: true }
+    { dbName: "test" }
   )
   .then(() => {
     console.log("Connected to MongoDB");
   })
-  .catch((err) => {
+  .catch((err: any) => {
     console.error("Error connecting to MongoDB:", err);
   });
 
-function detokenizeAdmin(req, res, next) {
+interface customRequest extends Request {
+  user?: JwtPayload;
+}
+function detokenizeAdmin(
+  req: customRequest,
+  res: Response,
+  next: NextFunction
+) {
+  // const headers = req.headers as any;
   const authHeader = req.headers.authorization;
   console.log("tarun header ", authHeader);
   if (authHeader) {
     const token = authHeader.split(" ")[1];
     let user = jwt.verify(token, secretKey);
-
+    if (!user) {
+      return res.sendStatus(403);
+    }
+    if (typeof user === "string") {
+      return res.sendStatus(403);
+    }
     if (user.role === "admin") {
       console.log("tarun at detoken" + user.username);
+      // req.user = user;
       req.user = user;
+
       next();
     } else {
       res.status(403).send("Unauthorised");
     }
   }
 }
-function detokenizeUser(req, res, next) {
+function detokenizeUser(req: customRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
   console.log(authHeader);
   if (authHeader) {
@@ -73,6 +85,12 @@ function detokenizeUser(req, res, next) {
     console.log(token);
     let user = jwt.verify(token, secretKey);
     console.log(user);
+    if (!user) {
+      return res.sendStatus(403);
+    }
+    if (typeof user === "string") {
+      return res.sendStatus(403);
+    }
     if (user.role === "admin" || user.role === "user") {
       console.log("tarun at detoken" + user.username);
       req.user = user;
@@ -108,7 +126,10 @@ app.post("/admin/signup", async (req, res) => {
     res.status(401).send("Admin already registered");
   }
 });
-app.get("/admin/me", detokenizeAdmin, (req, res) => {
+app.get("/admin/me", detokenizeAdmin, (req: customRequest, res: Response) => {
+  if (!req.user) {
+    return res.sendStatus(403);
+  }
   console.log("tarun", req.user.username);
   if (req.user.username) {
     res.status(201).json({
@@ -223,37 +244,57 @@ app.get("/users/courses", detokenizeUser, async (req, res) => {
   res.status(201).json(courses);
 });
 
-app.post("/users/courses/:courseId", detokenizeUser, async (req, res) => {
-  // logic to purchase a course
+app.post(
+  "/users/courses/:courseId",
+  detokenizeUser,
+  async (req: customRequest, res: Response) => {
+    // logic to purchase a course
 
-  console.log("tarun course id for purchase is " + req.params.courseId);
-  const course = await Course.findById(req.params.courseId);
-  console.log(course);
-  if (course.published) {
-    // const user = req.user;
-    // console.log(user);
-    const userInDB = await user.findOne({ username: req.user.username });
-    if (userInDB) {
-      const purchased = userInDB.purchasedCourse;
-      console.log(purchased);
-      purchased.push(course);
-      userInDB.purchasedCourse = purchased;
-      userInDB.save();
-      res.status(201).send({ message: "Purchased Sucessfully" });
-    } else {
-      console.log("user is not present in db");
+    console.log("tarun course id for purchase is " + req.params.courseId);
+    const course = await Course.findById(req.params.courseId);
+    console.log(course);
+    if (!course) {
+      return res.sendStatus(403);
     }
-  } else {
-    return res.status(400).send({ message: "Course is not published" });
+    if (course.published) {
+      // const user = req.user;
+      // console.log(user);
+      if (!req.user) {
+        return res.sendStatus(403);
+      }
+      const userInDB = await user.findOne({ username: req.user.username });
+      if (userInDB) {
+        const purchased = userInDB.purchasedCourse;
+        console.log(purchased);
+        purchased.push(course._id);
+        userInDB.purchasedCourse = purchased;
+        userInDB.save();
+        res.status(201).send({ message: "Purchased Sucessfully" });
+      } else {
+        console.log("user is not present in db");
+      }
+    } else {
+      return res.status(400).send({ message: "Course is not published" });
+    }
   }
-});
+);
 
-app.get("/users/purchasedCourses", detokenizeUser, async (req, res) => {
-  const userInDB = await user.findOne({ username: req.user.username });
-  console.log(userInDB);
-  const userCourses = await Course.find({ _id: userInDB.purchasedCourse });
-  res.status(201).json(userCourses);
-});
+app.get(
+  "/users/purchasedCourses",
+  detokenizeUser,
+  async (req: customRequest, res: Response) => {
+    if (!req.user) {
+      return res.sendStatus(403);
+    }
+    const userInDB = await user.findOne({ username: req.user.username });
+    console.log(userInDB);
+    if (!userInDB) {
+      return res.sendStatus(403);
+    }
+    const userCourses = await Course.find({ _id: userInDB.purchasedCourse });
+    res.status(201).json(userCourses);
+  }
+);
 app.get("/admin/courses/:courseId", detokenizeUser, async (req, res) => {
   // logic to purchase a course
 
