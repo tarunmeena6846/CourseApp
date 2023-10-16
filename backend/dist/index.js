@@ -179,6 +179,9 @@ app.get("/admin/courses", detokenizeAdmin, (req, res) => __awaiter(void 0, void 
     console.log("tarun", courses);
     res.status(201).json(courses);
 }));
+app.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    res.status(201).json({msg: "hello world"});
+}));
 // User routes
 app.post("/users/signup", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userPresent = yield user.findOne({
