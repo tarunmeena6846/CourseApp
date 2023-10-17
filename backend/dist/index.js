@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -16,10 +39,17 @@ const express_1 = __importDefault(require("express"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const cors_1 = __importDefault(require("cors"));
+const dotenv = __importStar(require("dotenv"));
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 app.use((0, cors_1.default)());
-const secretKey = "mysecretkey";
+dotenv.config();
+const secretKey = process.env.JWT_SECRET;
+const mongodbUrl = process.env.MONGODB_URI;
+console.log(secretKey);
+if (!mongodbUrl || !secretKey) {
+    throw new Error("Missing environment variables");
+}
 const userSchema = new mongoose_1.default.Schema({
     username: String,
     password: String,
@@ -41,7 +71,7 @@ const user = mongoose_1.default.model("user", userSchema);
 const Course = mongoose_1.default.model("Course", courseSchema);
 const admin = mongoose_1.default.model("admin", adminSchema);
 mongoose_1.default
-    .connect("mongodb+srv://tarunmeena6846:Tuesday6%5E@cluster0.f6tatpb.mongodb.net/", { dbName: "test" })
+    .connect(mongodbUrl, { dbName: "test" })
     .then(() => {
     console.log("Connected to MongoDB");
 })
