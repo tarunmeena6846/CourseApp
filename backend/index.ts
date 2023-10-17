@@ -3,14 +3,20 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import mongoose from "mongoose";
 import cors from "cors";
 import { Request, Response } from "express";
+import * as dotenv from "dotenv";
 
 const app = express();
 
 app.use(express.json());
 app.use(cors());
+dotenv.config();
 
-const secretKey = "mysecretkey";
-
+const secretKey = <string>process.env.JWT_SECRET;
+const mongodbUrl = <string>process.env.MONGODB_URI;
+console.log(secretKey);
+if (!mongodbUrl || !secretKey) {
+  throw new Error("Missing environment variables");
+}
 const userSchema = new mongoose.Schema({
   username: String,
   password: String,
@@ -35,10 +41,7 @@ const Course = mongoose.model("Course", courseSchema);
 const admin = mongoose.model("admin", adminSchema);
 
 mongoose
-  .connect(
-    "mongodb+srv://tarunmeena6846:Tuesday6%5E@cluster0.f6tatpb.mongodb.net/",
-    { dbName: "test" }
-  )
+  .connect(mongodbUrl, { dbName: "test" })
   .then(() => {
     console.log("Connected to MongoDB");
   })
