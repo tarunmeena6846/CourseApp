@@ -1,15 +1,15 @@
 
 # CourseApp
 
-courseApp is a simple admin console for a course selling website. The project was developed as side project while learning MERN stack.
+courseApp is a simple admin console for a course-selling website. This project was developed as a side project while learning the MERN stack.
 
-I have used MERN stack with Material-ui for styling.
+I have used the MERN stack with Material-ui for styling.
 
 
 ## Tech Stack
 
 **Client:** react, recoil, MUI,
-ypescript
+typescript
 
 **Server:** Node, Express, mongoose, JWT 
 
